@@ -1,0 +1,487 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
+  output   = "./erd/ERD.svg"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model Cctv {
+  id        BigInt   @id @default(autoincrement())
+  name      String?
+  latitude  Float?
+  longitude Float?
+  ip        String?
+  status    String?
+  username  String?
+  password  String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("cctv")
+}
+
+model Province {
+  id     BigInt  @id
+  name   String?
+  cities City[]
+
+  @@map("province")
+}
+
+model City {
+  id           BigInt        @id
+  name         String?
+  provinceId   BigInt
+  province     Province      @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+  subDistricts SubDistrict[]
+
+  @@map("city")
+}
+
+model SubDistrict {
+  id       BigInt    @id
+  name     String?
+  cityId   BigInt
+  city     City      @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  villages Village[]
+
+  @@map("sub_district")
+}
+
+model Village {
+  id               BigInt                  @id
+  name             String?
+  subDistrictId    BigInt
+  hydraulicOutputs HydraulicOutputHecras[]
+  subDistrict      SubDistrict             @relation(fields: [subDistrictId], references: [id], onDelete: Cascade)
+
+  @@map("village")
+}
+
+model Das {
+  id                BigInt                   @id @default(autoincrement())
+  name              String?
+  arrStations       ArrStation[]
+  awlrStations      AwlrStation[]
+  awsStations       AwsStation[]
+  hydrologicOutputs HydrologicOutputHechms[]
+
+  @@map("das")
+}
+
+model AwsStation {
+  id                  BigInt                   @id @default(autoincrement())
+  device_id           String?                  @unique
+  managed_by          String?
+  post_name           String?
+  dasId               BigInt?
+  time                DateTime?
+  rainfall            Float?
+  air_temperature_avg Float?
+  relative_humidity   Float?
+  wind_speed          Float?
+  wind_direction      Float?
+  solar_radiation_avg Float?
+  battery             Float?
+  panel_temperature   Float?
+  image               String?
+  villageId           BigInt?
+  latitude            Float?
+  longitude           Float?
+  built_by            String?
+  built_year          String?
+  renovated_by        String?
+  renovated_year      String?
+  alert_level_1       Int?
+  alert_level_2       Int?
+  alert_level_3       Int?
+  alert_level_4       Int?
+  status              String?
+  logs                AwsLog[]
+  das                 Das?                     @relation(fields: [dasId], references: [id])
+  hydrologicOutputs   HydrologicOutputHechms[]
+
+  @@map("aws_stations")
+}
+
+model AwsLog {
+  id                  BigInt      @id @default(autoincrement())
+  aws_station_id      BigInt?
+  time                DateTime?
+  rainfall            Float?
+  air_temperature_avg Float?
+  relative_humidity   Float?
+  wind_speed          Float?
+  wind_direction      Float?
+  solar_radiation_avg Float?
+  battery             Float?
+  status              String?
+  post_name           String?
+  station             AwsStation? @relation(fields: [aws_station_id], references: [id], onDelete: Cascade)
+
+  @@map("aws_logs")
+}
+
+model AwlrStation {
+  id                BigInt                   @id @default(autoincrement())
+  device_id         String?                  @unique
+  managed_by        String?
+  post_name         String?
+  dasId             BigInt?
+  river_name        String?
+  time              DateTime?
+  water_level       Float?
+  battery           Float?
+  panel_temperature Float?
+  image             String?
+  flow_ho           Float?
+  flow_a            Float?
+  flow_b            Float?
+  debit             Float?
+  villageId         BigInt?
+  latitude          Float?
+  longitude         Float?
+  built_by          String?
+  built_year        String?
+  renovated_by      String?
+  renovated_year    String?
+  alert_level_1     Int?
+  alert_level_2     Int?
+  alert_level_3     Int?
+  alert_level_4     Int?
+  status            String?
+  logs              AwlrLog[]
+  das               Das?                     @relation(fields: [dasId], references: [id])
+  hydrologicOutputs HydrologicOutputHechms[]
+
+  @@map("awlr_stations")
+}
+
+model AwlrLog {
+  id                BigInt       @id @default(autoincrement())
+  awlr_station_id   BigInt?
+  time              DateTime?
+  water_level       Float?
+  debit             Float?
+  battery           Float?
+  panel_temperature Float?
+  status            String?
+  post_name         String?
+  station           AwlrStation? @relation(fields: [awlr_station_id], references: [id], onDelete: Cascade)
+
+  @@map("awlr_logs")
+}
+
+model ArrStation {
+  id                BigInt                   @id @default(autoincrement())
+  device_id         String?                  @unique
+  managed_by        String?
+  post_name         String?
+  dasId             BigInt?
+  time              DateTime?
+  rainfall          Float?
+  battery           Float?
+  panel_temperature Float?
+  image             String?
+  villageId         BigInt?
+  latitude          Float?
+  longitude         Float?
+  built_by          String?
+  built_year        String?
+  renovated_by      String?
+  renovated_year    String?
+  alert_level_1     Int?
+  alert_level_2     Int?
+  alert_level_3     Int?
+  alert_level_4     Int?
+  status            String?
+  logs              ArrLog[]
+  das               Das?                     @relation(fields: [dasId], references: [id])
+  hydrologicOutputs HydrologicOutputHechms[]
+
+  @@map("arr_stations")
+}
+
+model ArrLog {
+  id                BigInt      @id @default(autoincrement())
+  arr_station_id    BigInt?
+  time              DateTime?
+  rainfall          Float?
+  battery           Float?
+  panel_temperature Float?
+  status            String?
+  post_name         String?
+  station           ArrStation? @relation(fields: [arr_station_id], references: [id], onDelete: Cascade)
+
+  @@map("arr_logs")
+}
+
+model ContactWa {
+  id          BigInt      @id @default(autoincrement())
+  name        String?
+  phoneNumber String?     @map("phone_number")
+  description String?
+  status      String?
+  type        String?
+  messages    MessageWa[]
+
+  @@map("contact_wa")
+}
+
+model MessageWa {
+  id          BigInt     @id @default(autoincrement())
+  contact_id  BigInt?
+  messageText String?    @db.Text
+  created_at  DateTime?
+  contact     ContactWa? @relation(fields: [contact_id], references: [id], onDelete: Cascade)
+
+  @@map("message_wa")
+}
+
+model ArrLogManual {
+  id      BigInt          @id @default(autoincrement())
+  user_id BigInt?
+  arr_id  BigInt?
+  time    String?
+  date    DateTime?
+  value   Float?
+  unit    String?
+  arr     PostHydrologic? @relation(fields: [arr_id], references: [id])
+  user    User?           @relation(fields: [user_id], references: [id])
+
+  @@map("arr_log_manuals")
+}
+
+model AwlrLogManual {
+  id      BigInt          @id @default(autoincrement())
+  user_id BigInt?
+  awlr_id BigInt?
+  time    String?
+  date    DateTime?
+  value   Float?
+  unit    String?
+  awlr    PostHydrologic? @relation(fields: [awlr_id], references: [id])
+  user    User?           @relation(fields: [user_id], references: [id])
+
+  @@map("awlr_log_manuals")
+}
+
+model AwsLogManual {
+  id      BigInt          @id @default(autoincrement())
+  user_id BigInt?
+  aws_id  BigInt?
+  time    String?
+  date    DateTime?
+  value   Float?
+  unit    String?
+  aws     PostHydrologic? @relation(fields: [aws_id], references: [id])
+  user    User?           @relation(fields: [user_id], references: [id])
+
+  @@map("aws_log_manuals")
+}
+
+model PostGuard {
+  id                  BigInt          @id @default(autoincrement())
+  user_id             BigInt?
+  name                String?
+  postName            String?         @map("post_name")
+  typePos             String?         @map("type_pos")
+  photo               String?
+  time                String?
+  date                DateTime?
+  value               Float?
+  unit                String?
+  manual_positions_id BigInt?
+  manualPosition      PostHydrologic? @relation(fields: [manual_positions_id], references: [id])
+  user                User?           @relation(fields: [user_id], references: [id])
+
+  @@map("post_guards")
+}
+
+model PostHydrologic {
+  id             BigInt          @id @default(autoincrement())
+  name           String?
+  type_pos       String?
+  arrLogManuals  ArrLogManual[]
+  awlrLogManuals AwlrLogManual[]
+  awsLogManuals  AwsLogManual[]
+  postGuards     PostGuard[]
+
+  @@map("post_hydrologic")
+}
+
+model User {
+  id             BigInt          @id @default(autoincrement())
+  username       String?         @unique
+  password_hash  String?
+  email          String?         @unique
+  full_name      String?
+  role           String?
+  is_active      Boolean?        @default(true)
+  createdAt      DateTime?       @map("created_at")
+  updatedAt      DateTime?       @map("updated_at")
+  arrLogManuals  ArrLogManual[]
+  awlrLogManuals AwlrLogManual[]
+  awsLogManuals  AwsLogManual[]
+  postGuards     PostGuard[]
+
+  @@map("users")
+}
+
+model Report {
+  id       BigInt         @id @default(autoincrement())
+  category String?
+  details  ReportDetail[]
+
+  @@map("report")
+}
+
+model ReportDetail {
+  id             BigInt    @id @default(autoincrement())
+  category_id    BigInt?
+  title          String?
+  news           String?
+  date           DateTime?
+  status         String?
+  image          String?
+  reportCategory Report?   @relation(fields: [category_id], references: [id])
+
+  @@map("report_details")
+}
+
+model HydrologyRequest {
+  id              BigInt  @id @default(autoincrement())
+  name            String?
+  email           String?
+  phone           String?
+  institution     String?
+  uploaded_letter String?
+  feedback        String?
+
+  @@map("hydrology_requests")
+}
+
+model HydraulicOutputHecras {
+  id                   BigInt                  @id @default(autoincrement())
+  hydrologic_output_id BigInt?
+  time                 DateTime?
+  flood_depth          Float?
+  flow_velocity        Float?
+  inundation_area      Float?
+  model_type           String?
+  model_version        String?
+  parameter_set        String?
+  village_id           BigInt?
+  hydrologic_output    HydrologicOutputHechms? @relation(fields: [hydrologic_output_id], references: [id])
+  village              Village?                @relation(fields: [village_id], references: [id])
+
+  @@map("hydraulic_output_hecras")
+}
+
+model HydrologicOutputHechms {
+  id               BigInt                  @id @default(autoincrement())
+  das_id           BigInt?
+  time             DateTime?
+  debit            Float?
+  volume           Float?
+  model_type       String?
+  model_version    String?
+  parameter_set    String?
+  awlr_station_id  BigInt?
+  aws_station_id   BigInt?
+  arr_station_id   BigInt?
+  hydraulicOutputs HydraulicOutputHecras[]
+  arr_station      ArrStation?             @relation(fields: [arr_station_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  awlr_station     AwlrStation?            @relation(fields: [awlr_station_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  aws_station      AwsStation?             @relation(fields: [aws_station_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  das              Das?                    @relation(fields: [das_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("hydrologic_output_hechms")
+}
+
+model Vehicle {
+  id                   BigInt               @id @default(autoincrement())
+  name                 String?
+  driver_name          String?
+  driver_phone         String?
+  registration         String?              @unique
+  chassis_number       String?
+  time                 DateTime?
+  latitude             Float?
+  longitude            Float?
+  position_description String?
+  speed                Float?
+  bearing              Int?
+  vehicle_status       Boolean?             @default(true)
+  idling               Boolean?             @default(true)
+  odometer             BigInt?
+  altitude             Float?
+  fuel_level           Float?
+  fuel_percentage      Float?
+  created_at           DateTime?
+  vehicleTrackingLogs  VehicleTrackingLog[]
+
+  @@map("vehicle")
+}
+
+model VehicleTrackingLog {
+  id                   BigInt    @id @default(autoincrement())
+  vehicle_id           BigInt?
+  registration         String?
+  chassis_number       String?
+  time                 DateTime?
+  latitude             Float?
+  longitude            Float?
+  position_description String?
+  speed                Float?
+  bearing              Int?
+  vehicle_status       Boolean?
+  idling               Boolean?
+  odometer             BigInt?
+  altitude             Float?
+  fuel_level           Float?
+  fuel_percentage      Float?
+  created_at           DateTime?
+  vehicle              Vehicle?  @relation(fields: [vehicle_id], references: [id], onDelete: Cascade)
+
+  @@map("vehicle_tracking_logs")
+}
+
+model Sirine {
+  id                    BigInt    @id @default(autoincrement())
+  name                  String?
+  address               String?
+  latitude              Float?
+  longitude             Float?
+  device_name           String?
+  firmware_version      String?
+  status_logger         String?
+  last_comm_success     DateTime?
+  is_active             Boolean?
+  outdated_alarm_status String?
+  outdated_data_time    DateTime?
+  battery_voltage       Float?
+  battery_unit          String?
+  battery_status_alarm  String?
+  on_control_value      Int?
+  on_control_state      String?
+  off_control_value     Int?
+  off_control_state     String?
+  on_control_state_id   String?
+  on_control_url        String?
+  off_control_state_id  String?
+  off_control_url       String?
+
+  // Tambahkan ini
+  is_sirine_on          Boolean?  @default(false)
+   updated_at           DateTime? @updatedAt
+
+  @@map("sirine")
+}
+
